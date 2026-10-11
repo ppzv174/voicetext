@@ -1,0 +1,31 @@
+
+{
+  "manifest_version": 3,
+  "name": "VoiceText Cat",
+  "version": "1.0.0",
+  "description": "Голосовой ввод на разных языках на веб-страницах",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "action": {
+    "default_title": "VoiceText Cat",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*/*",
+        "http://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}
