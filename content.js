@@ -19,13 +19,13 @@
         box-shadow:0 4px 18px #0005;
       }
       .panel {
-        display:none;width:260px;margin-bottom:10px;padding:15px;
+        display:none;width:270px;margin-bottom:10px;padding:15px;
         color:#f3fff5;background:#17231b;border:1px solid #39e879;
         border-radius:18px;box-shadow:0 4px 24px #0006;
       }
       .panel.open { display:block; }
       h3 { margin:0 0 10px;font-size:18px; }
-      p { font-size:13px;color:#c4d7c8; }
+      p { font-size:13px;color:#c4d7c8;line-height:1.4; }
       select,button.action {
         width:100%;padding:11px;margin-top:8px;border-radius:10px;
         border:0;font-size:14px;cursor:pointer;
@@ -37,7 +37,7 @@
     </style>
     <section class="panel" id="panel">
       <h3>🐱 VoiceText</h3>
-      <p>Выбери язык и говори. Текст появится в выбранном поле.</p>
+      <p>Выбери язык. Нажми на поле ввода на сайте и говори.</p>
       <select id="language" aria-label="Язык диктовки">
         <option value="ru-RU">Русский</option>
         <option value="en-US">English (US)</option>
@@ -51,8 +51,6 @@
         <option value="pl-PL">Polski</option>
         <option value="tr-TR">Türkçe</option>
         <option value="pt-BR">Português</option>
-        <option value="zh-CN">中文</option>
-        <option value="ja-JP">日本語</option>
       </select>
       <button class="action" id="start">🎙️ Включить микрофон</button>
       <div id="status">Микрофон выключен</div>
@@ -70,19 +68,25 @@
   let recognition = null;
   let running = false;
 
-  // Запоминаем последнее поле, в котором пользователь печатал.
+  chrome.runtime.onMessage.addListener(message => {
+    if (message.action === 'openPanel') {
+      panel.classList.add('open');
+    }
+  });
+
   document.addEventListener('focusin', event => {
-    if (event.target !== host && !host.contains(event.target)) {
-      target = event.target;
+    const el = event.target;
+    if (el !== host && !host.contains(el) &&
+        el.matches?.('input,textarea,[contenteditable="true"],[role="textbox"]')) {
+      target = el;
     }
   }, true);
 
   document.addEventListener('pointerdown', event => {
-    if (event.target !== host && !host.contains(event.target)) {
-      const el = event.target;
-      if (el.matches?.('input,textarea,[contenteditable="true"],[role="textbox"]')) {
-        target = el;
-      }
+    const el = event.target;
+    if (el !== host && !host.contains(el) &&
+        el.matches?.('input,textarea,[contenteditable="true"],[role="textbox"]')) {
+      target = el;
     }
   }, true);
 
@@ -107,13 +111,10 @@
         status.textContent = 'Это поле нельзя редактировать.';
         return;
       }
+
       const a = el.selectionStart ?? el.value.length;
       const b = el.selectionEnd ?? a;
-      if (typeof el.setRangeText === 'function') {
-        el.setRangeText(text, a, b, 'end');
-      } else {
-        el.value += text;
-      }
+      el.setRangeText(text, a, b, 'end');
       el.dispatchEvent(new Event('input', { bubbles: true }));
       return;
     }
@@ -137,13 +138,14 @@
       } else {
         el.append(document.createTextNode(text));
       }
+
       el.dispatchEvent(new InputEvent('input', {
         bubbles: true, inputType: 'insertText', data: text
       }));
       return;
     }
 
-    status.textContent = 'Это поле не поддерживается. Выбери обычное поле сообщения.';
+    status.textContent = 'Это поле ввода не поддерживается.';
   }
 
   const SpeechRecognition =
@@ -158,7 +160,9 @@
 
   function stop() {
     running = false;
-    try { recognition?.stop(); } catch (_) {}
+    try {
+      recognition?.stop();
+    } catch (_) {}
     start.textContent = '🎙️ Включить микрофон';
     start.classList.remove('stop');
     status.textContent = 'Микрофон выключен';
@@ -184,20 +188,21 @@
     };
 
     recognition.onerror = event => {
-      if (event.error === 'not-allowed') {
-        status.textContent = 'Разреши доступ к микрофону в Chrome.';
+      status.textContent = event.error === 'not-allowed'
+        ? 'Разреши доступ к микрофону в Chrome.'
+        : 'Ошибка распознавания: ' + event.error;
+
+      if (event.error === 'not-allowed' ||
+          event.error === 'language-not-supported') {
         stop();
-      } else if (event.error === 'language-not-supported') {
-        status.textContent = 'Этот язык не поддерживается распознаванием.';
-        stop();
-      } else {
-        status.textContent = 'Ошибка: ' + event.error;
       }
     };
 
     recognition.onend = () => {
       if (running) {
-        try { recognition.start(); } catch (_) {}
+        try {
+          recognition.start();
+        } catch (_) {}
       }
     };
 
@@ -206,7 +211,8 @@
       running = true;
       start.textContent = '⏹ Выключить микрофон';
       start.classList.add('stop');
-      status.textContent = 'Слушаю: ' + language.options[language.selectedIndex].text;
+      status.textContent =
+        'Слушаю: ' + language.options[language.selectedIndex].text;
     } catch (_) {
       status.textContent = 'Не удалось включить микрофон. Попробуй снова.';
       stop();
