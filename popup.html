@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VoiceText Cat</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      width: 280px;
+      margin: 0;
+      padding: 20px;
+      background: #142019;
+      color: #f3fff5;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .cat {
+      font-size: 55px;
+      margin-bottom: 5px;
+    }
+    h2 { margin: 5px 0; color: #39e879; }
+    p {
+      color: #c0d1c4;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border: 0;
+      border-radius: 10px;
+      background: #39e879;
+      color: #102016;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .secondary {
+      background: #304538;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="cat">🐱</div>
+  <h2>VoiceText</h2>
+  <p>Голосовой ввод на разных языках</p>
+  <button id="open">🐱 Показать кошечку на сайте</button>
+  <button class="secondary" id="help">Как пользоваться?</button>
+  <p id="status">Открой нужную вкладку и выбери поле ввода.</p>
+  <script src="popup.js"></script>
+</body>
+</html>
